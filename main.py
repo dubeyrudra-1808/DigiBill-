@@ -6,6 +6,9 @@ from PIL import Image
 import pytesseract
 from pdf2image import convert_from_path
 
+from dotenv import load_dotenv
+
+load_dotenv()
 # —————— Setup & Logging ——————
 logging.basicConfig(
     level=logging.INFO,
