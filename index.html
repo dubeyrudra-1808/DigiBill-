@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bill Processor Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #6B73FF 0%, #000DFF 100%);
+        }
+        
+        .glass-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .upload-zone.dragover {
+            border-color: #3b82f6;
+            background-color: rgba(255, 255, 255, 0.2);
+            transform: scale(1.02);
+        }
+
+        .fade-in { animation: fadeIn 0.5s ease-in forwards; }
+        .slide-up { animation: slideUp 0.5s ease-out forwards; }
+        
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <header class="bg-white/10 backdrop-blur-lg border-b border-white/20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <svg class="h-8 w-8 text-white mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <h1 class="text-xl font-bold text-white">Bill Processor Pro</h1>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="space-y-6">
+                <div class="glass-card rounded-2xl p-6">
+                    <h2 class="text-2xl font-semibold text-white mb-6">1. Upload Your Bill</h2>
+                    
+                    <div id="uploadZone" class="border-2 border-dashed border-white/40 rounded-xl p-8 text-center cursor-pointer transition-all duration-300 ease-in-out hover:border-white hover:bg-white/10">
+                        <div id="uploadContent">
+                            <svg class="mx-auto h-12 w-12 text-white/70 mb-4" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            </svg>
+                            <p class="text-lg font-medium text-white mb-2">Drop your bill here or click</p>
+                            <p class="text-sm text-white/70">Supports PDF, PNG, JPG (Max 10MB)</p>
+                        </div>
+                        
+                        <div id="loadingContent" class="hidden">
+                            <svg class="animate-spin mx-auto h-12 w-12 text-white mb-4" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <p class="text-lg font-medium text-white">Processing your bill...</p>
+                        </div>
+                    </div>
+                    <input type="file" id="fileInput" accept=".pdf,.png,.jpg,.jpeg" class="hidden">
+                </div>
+
+                <div id="fileInfo" class="hidden glass-card rounded-2xl p-6 fade-in">
+                    <h3 class="text-lg font-semibold text-white mb-4">Selected File</h3>
+                    <div class="space-y-2 text-white/90">
+                        <p><strong>Name:</strong> <span id="fileName"></span></p>
+                        <p><strong>Size:</strong> <span id="fileSize"></span></p>
+                    </div>
+                     <button id="processBtn" class="mt-4 w-full bg-white text-blue-600 font-bold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed">
+                        Process Bill
+                    </button>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                <div id="resultsCard" class="hidden bg-white rounded-2xl shadow-2xl slide-up">
+                    <div class="p-6 border-b border-gray-200 flex justify-between items-center">
+                        <h2 id="resultsTitle" class="text-2xl font-bold text-gray-800">Extracted Data</h2>
+                        <button id="copyBtn" class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1.5 rounded-lg text-sm font-semibold">Copy JSON</button>
+                    </div>
+                    <div id="resultsContent" class="p-6">
+                        </div>
+                </div>
+
+                <div id="errorCard" class="hidden bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg slide-up" role="alert">
+                    <p class="font-bold">Error</p>
+                    <p id="errorMessage"></p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        class BillProcessor {
+            constructor() {
+                this.selectedFile = null;
+                this.isProcessing = false;
+                this.lastResult = null;
+                this.apiEndpoint = 'http://127.0.0.1:8000/upload';
+                this.elements = {
+                    uploadZone: document.getElementById('uploadZone'),
+                    fileInput: document.getElementById('fileInput'),
+                    uploadContent: document.getElementById('uploadContent'),
+                    loadingContent: document.getElementById('loadingContent'),
+                    fileInfo: document.getElementById('fileInfo'),
+                    fileName: document.getElementById('fileName'),
+                    fileSize: document.getElementById('fileSize'),
+                    processBtn: document.getElementById('processBtn'),
+                    resultsCard: document.getElementById('resultsCard'),
+                    resultsTitle: document.getElementById('resultsTitle'),
+                    resultsContent: document.getElementById('resultsContent'),
+                    copyBtn: document.getElementById('copyBtn'),
+                    errorCard: document.getElementById('errorCard'),
+                    errorMessage: document.getElementById('errorMessage'),
+                };
+                this.initializeEventListeners();
+            }
+
+            initializeEventListeners() {
+                const { uploadZone, fileInput, processBtn, copyBtn } = this.elements;
+                uploadZone.addEventListener('click', () => !this.isProcessing && fileInput.click());
+                ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+                    uploadZone.addEventListener(eventName, this.preventDefaults, false);
+                });
+                ['dragenter', 'dragover'].forEach(eventName => {
+                    uploadZone.addEventListener(eventName, () => uploadZone.classList.add('dragover'), false);
+                });
+                ['dragleave', 'drop'].forEach(eventName => {
+                    uploadZone.addEventListener(eventName, () => uploadZone.classList.remove('dragover'), false);
+                });
+                uploadZone.addEventListener('drop', this.handleDrop.bind(this), false);
+                fileInput.addEventListener('change', (e) => this.handleFileSelection(e.target.files[0]));
+                processBtn.addEventListener('click', () => this.processFile());
+                copyBtn.addEventListener('click', () => this.copyToClipboard());
+            }
+
+            preventDefaults(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+
+            handleDrop(e) {
+                const dt = e.dataTransfer;
+                const file = dt.files[0];
+                this.handleFileSelection(file);
+            }
+
+            handleFileSelection(file) {
+                if (!file || this.isProcessing) return;
+
+                const allowedTypes = ['application/pdf', 'image/png', 'image/jpeg'];
+                if (!allowedTypes.includes(file.type)) {
+                    this.showError('Invalid file type. Please use PDF, PNG, or JPG.');
+                    return;
+                }
+
+                if (file.size > 10 * 1024 * 1024) { // 10MB
+                    this.showError('File is too large. Maximum size is 10MB.');
+                    return;
+                }
+
+                this.selectedFile = file;
+                this.elements.fileName.textContent = file.name;
+                this.elements.fileSize.textContent = `${(file.size / 1024 / 1024).toFixed(2)} MB`;
+                this.elements.fileInfo.classList.remove('hidden');
+                this.hideError();
+                this.elements.resultsCard.classList.add('hidden');
+            }
+
+            async processFile() {
+                if (!this.selectedFile || this.isProcessing) return;
+
+                this.isProcessing = true;
+                this.setLoadingState(true);
+
+                const formData = new FormData();
+                formData.append('file', this.selectedFile);
+
+                try {
+                    const response = await fetch(this.apiEndpoint, {
+                        method: 'POST',
+                        body: formData,
+                    });
+
+                    const result = await response.json();
+
+                    if (!response.ok) {
+                        throw new Error(result.detail || result.error || 'An unknown server error occurred.');
+                    }
+                    
+                    this.lastResult = result;
+                    this.showResults(result, response.status);
+
+                } catch (error) {
+                    console.error('Processing Error:', error);
+                    this.showError(error.message);
+                } finally {
+                    this.isProcessing = false;
+                    this.setLoadingState(false);
+                }
+            }
+
+            setLoadingState(isLoading) {
+                this.isProcessing = isLoading;
+                this.elements.uploadContent.classList.toggle('hidden', isLoading);
+                this.elements.loadingContent.classList.toggle('hidden', !isLoading);
+                this.elements.processBtn.disabled = isLoading;
+            }
+
+            showResults(data, status) {
+                const { resultsCard, resultsContent, resultsTitle } = this.elements;
+                this.hideError();
+                
+                resultsContent.innerHTML = this.renderResults(data, status);
+                
+                if (status === 202) { // Partial success
+                    resultsTitle.textContent = "Partial Results (OCR Only)";
+                    resultsCard.classList.add('bg-yellow-50', 'border-yellow-400');
+                } else if (data.error) {
+                    resultsTitle.textContent = "Extraction Warning";
+                    resultsCard.classList.add('bg-orange-50', 'border-orange-400');
+                }
+                else {
+                    resultsTitle.textContent = "Extracted Data";
+                    resultsCard.classList.remove('bg-yellow-50', 'border-yellow-400', 'bg-orange-50', 'border-orange-400');
+                }
+                
+                resultsCard.classList.remove('hidden');
+            }
+
+            renderResults(data, status) {
+                // If we only got raw text back (status 202)
+                if (data.raw_text) {
+                    return `<div class="text-sm text-gray-700">
+                                <h3 class="font-bold mb-2">AI service was unavailable. The following text was extracted via OCR:</h3>
+                                <pre class="bg-gray-100 p-3 rounded-md whitespace-pre-wrap font-mono">${data.raw_text}</pre>
+                            </div>`;
+                }
+                // If Gemini returned an error but included the raw response
+                if (data.error && data.raw_response) {
+                    return `<div class="text-sm text-red-700">
+                                <h3 class="font-bold mb-2">${data.suggestion || data.error}:</h3>
+                                <pre class="bg-red-50 p-3 rounded-md whitespace-pre-wrap font-mono">${data.raw_response}</pre>
+                            </div>`;
+                }
+
+                // Main success path: render a clean table
+                let html = '<div class="space-y-4">';
+
+                for (const key in data) {
+                    const value = data[key];
+                    const formattedKey = key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+                    if (key === 'items' && Array.isArray(value)) {
+                        html += `<div><h3 class="text-lg font-bold text-gray-700 mb-2">${formattedKey}</h3>`;
+                        html += '<div class="overflow-x-auto border border-gray-200 rounded-lg">';
+                        html += '<table class="min-w-full text-sm text-left text-gray-700">';
+                        html += '<thead class="bg-gray-50 text-xs text-gray-700 uppercase">';
+                        html += '<tr>';
+                        // Create headers from the first item's keys
+                        if (value.length > 0) {
+                            Object.keys(value[0]).forEach(itemKey => {
+                                html += `<th scope="col" class="px-4 py-2">${itemKey.replace(/_/g, ' ')}</th>`;
+                            });
+                        }
+                        html += '</tr></thead><tbody>';
+
+                        // Create rows for each item
+                        value.forEach(item => {
+                            html += '<tr class="bg-white border-b">';
+                            Object.values(item).forEach(itemValue => {
+                                html += `<td class="px-4 py-2">${itemValue}</td>`;
+                            });
+                            html += '</tr>';
+                        });
+
+                        html += '</tbody></table></div></div>';
+                    } else if (value !== null && value !== "" && (!Array.isArray(value) || value.length > 0)) {
+                        html += `<div class="flex justify-between border-b pb-2">
+                                     <span class="font-semibold text-gray-600">${formattedKey}</span>
+                                     <span class="text-gray-800 text-right">${value}</span>
+                                 </div>`;
+                    }
+                }
+                html += '</div>';
+                return html;
+            }
+
+            showError(message) {
+                this.elements.errorMessage.textContent = message;
+                this.elements.errorCard.classList.remove('hidden');
+                this.elements.resultsCard.classList.add('hidden');
+            }
+
+            hideError() {
+                this.elements.errorCard.classList.add('hidden');
+            }
+
+            async copyToClipboard() {
+                if (!this.lastResult) return;
+                try {
+                    await navigator.clipboard.writeText(JSON.stringify(this.lastResult, null, 2));
+                    const copyBtn = this.elements.copyBtn;
+                    const originalText = copyBtn.textContent;
+                    copyBtn.textContent = 'Copied!';
+                    setTimeout(() => { copyBtn.textContent = originalText; }, 2000);
+                } catch (err) {
+                    console.error('Failed to copy:', err);
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            new BillProcessor();
+        });
+    </script>
+</body>
+</html>
