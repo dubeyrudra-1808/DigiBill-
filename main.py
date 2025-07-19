@@ -37,7 +37,7 @@ def ocr_pdf(path: str) -> str:
     return "\n".join(texts)
 
 # 5️⃣ Gemini API settings
-API_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyBYF6YY896mwS0_hod-A8VAcLMChAXBXvc")
+API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent"  # Changed to more stable model
 
 def call_gemini_with_retry(prompt: str, max_retries: int = 3) -> dict:
